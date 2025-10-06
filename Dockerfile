@@ -1,6 +1,6 @@
 FROM node:18-alpine
 
-# Install dependencies
+# Install dependencies for n8n
 RUN apk add --no-cache \
     python3 \
     make \
@@ -9,9 +9,6 @@ RUN apk add --no-cache \
     jpeg-dev \
     pango-dev \
     giflib-dev
-
-# Create app directory
-WORKDIR /app
 
 # Install n8n globally
 RUN npm install -g n8n
@@ -23,15 +20,8 @@ ENV N8N_BASIC_AUTH_ACTIVE=false
 ENV GENERIC_TIMEZONE=UTC
 ENV N8N_LOG_LEVEL=info
 
-# Create n8n user
-RUN addgroup -g 1000 n8n && \
-    adduser -u 1000 -G n8n -s /bin/sh -D n8n
-
-# Create n8n directory
-RUN mkdir -p /home/n8n/.n8n && \
-    chown -R n8n:n8n /home/n8n
-
-USER n8n
+# Create data directory
+RUN mkdir -p /.n8n && chmod 777 /.n8n
 
 EXPOSE 5678
 

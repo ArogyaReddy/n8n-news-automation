@@ -1,36 +1,12 @@
+# Use official n8n image
 FROM n8nio/n8n:latest
 
-# Switch to root for setup
-USER root
-
-# Install wget for health checks
-RUN apk add --no-cache wget
-
-# Create n8n directory with proper permissions
-RUN mkdir -p /home/node/.n8n && chown -R node:node /home/node/.n8n
-
-# Switch back to node user
-USER node
-
-# Set working directory
-WORKDIR /home/node
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV N8N_LOG_LEVEL=info
+# Set minimal environment variables  
 ENV N8N_HOST=0.0.0.0
-ENV N8N_PROTOCOL=http
-ENV N8N_BASIC_AUTH_ACTIVE=false
-ENV GENERIC_TIMEZONE=UTC
-ENV DB_TYPE=sqlite
-ENV N8N_ENCRYPTION_KEY=n8n-encryption-key-for-render
-
-# Copy and setup entrypoint
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+ENV N8N_PORT=5678
 
 # Expose port
 EXPOSE 5678
 
-# Use entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
+# Use default n8n entrypoint
+CMD ["n8n"]

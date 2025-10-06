@@ -1,0 +1,161 @@
+{
+  "name": "Daily News Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7,17 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily News Schedule",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://newsapi.org/v2/top-headlines",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "country",
+              "value": "us"
+            },
+            {
+              "name": "pageSize",
+              "value": "10"
+            },
+            {
+              "name": "category",
+              "value": "general"
+            }
+          ]
+        }
+      },
+      "name": "Get Top News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "newsapi_credentials",
+          "name": "NewsAPI Credentials"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const articles = $input.first().json.articles;\nconst currentTime = new Date().toLocaleString();\n\nlet newsContent = `📰 **Daily News Brief - ${currentTime}**\\n\\n`;\n\narticles.forEach((article, index) => {\n  newsContent += `**${index + 1}. ${article.title}**\\n`;\n  newsContent += `📝 ${article.description || 'No description available'}\\n`;\n  newsContent += `🔗 ${article.url}\\n`;\n  newsContent += `📰 Source: ${article.source.name}\\n\\n`;\n});\n\nreturn {\n  json: {\n    newsContent: newsContent,\n    articleCount: articles.length,\n    timestamp: currentTime\n  }\n};"
+      },
+      "name": "Format News",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "YOUR_CHAT_ID",
+        "text": "={{ $json.newsContent }}"
+      },
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "fromEmail": "noreply@yourapp.com",
+        "toEmail": "your-email@gmail.com",
+        "subject": "📰 Daily News Brief - {{ new Date().toLocaleDateString() }}",
+        "emailFormat": "text",
+        "text": "={{ $json.newsContent }}"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "YOUR_WEBHOOK_URL",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "news",
+              "value": "={{ $json.newsContent }}"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ $json.timestamp }}"
+            }
+          ]
+        }
+      },
+      "name": "Webhook Delivery",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Daily News Schedule": {
+      "main": [
+        [
+          {
+            "node": "Get Top News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Top News": {
+      "main": [
+        [
+          {
+            "node": "Format News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format News": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Webhook Delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "createdAt": "2024-10-05T00:00:00.000Z",
+  "id": "daily-news-automation",
+  "settings": {
+    "timezone": "America/New_York"
+  }
+}

@@ -15,7 +15,7 @@ USER node
 # Set working directory
 WORKDIR /home/node
 
-# Set environment variables for Railway
+# Set environment variables
 ENV NODE_ENV=production
 ENV N8N_LOG_LEVEL=info
 ENV N8N_HOST=0.0.0.0
@@ -23,10 +23,14 @@ ENV N8N_PROTOCOL=http
 ENV N8N_BASIC_AUTH_ACTIVE=false
 ENV GENERIC_TIMEZONE=UTC
 ENV DB_TYPE=sqlite
-ENV N8N_ENCRYPTION_KEY=n8n-encryption-key-for-railway
+ENV N8N_ENCRYPTION_KEY=n8n-encryption-key-for-render
+
+# Copy and setup entrypoint
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose port
 EXPOSE 5678
 
-# Simple direct start command
-CMD ["sh", "-c", "N8N_PORT=${PORT:-5678} n8n start"]
+# Use entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
